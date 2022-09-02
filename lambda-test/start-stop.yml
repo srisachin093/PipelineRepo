@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Lambda function with cfn-response.
+
+Parameters:
+  FunctionNaming:
+    Type: String
+    Description: Please enter Name of Lambda function
+
+Resources:
+  StartStops1:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.7
+      Role: arn:aws:iam::988262583989:role/Lambda_for_ec2 
+      Handler: index.lambda_handler
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+          import cfnresponse
+          region = 'us-east-1'
+          instances = ['i-03cc80fa2184f32fd']
+          
+          ec2 = boto3.client('ec2', region_name=region)
+          def lambda_handler(event, context):
+            try:
+
+          #    ec2.stop_instances(InstanceIds=instances)
+              ec2.start_instances(InstanceIds=instances)
+              print('stopped your instances: ' + str(instances))
+            except Exception as e:
+              print(e)  
+
+          def handler(event, context):
+              responseValue = int(event['ResourceProperties']['Input']) * 5
+              responseData = {}
+              responseData['Data'] = responseValue
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData, "CustomResourcePhysicalID")
+            
+           
+      Description: Invoke a function during stack creation.
+      FunctionName: !Ref FunctionNaming
+
+  Primerinvoke:
+    Type: AWS::CloudFormation::CustomResource
+    DependsOn: StartStops1
+    Version: "1.0"
+    Properties:
+      ServiceToken: !GetAtt StartStops1.Arn      
